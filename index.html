@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>摄像头访问</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .video-container {
+            position: relative;
+            width: 100%;
+            margin: 20px 0;
+        }
+        #video {
+            width: 100%;
+            border-radius: 8px;
+            background-color: #000;
+        }
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: #1677ff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #4096ff;
+        }
+        button:disabled {
+            background-color: #d9d9d9;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .error {
+            background-color: #fff2f0;
+            border: 1px solid #ffccc7;
+            color: #cf1322;
+        }
+        .success {
+            background-color: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #389e0d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>摄像头访问</h1>
+        <div class="video-container">
+            <video id="video" autoplay playsinline></video>
+        </div>
+        <div class="controls">
+            <button id="startButton">开启摄像头</button>
+            <button id="stopButton" disabled>关闭摄像头</button>
+        </div>
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const status = document.getElementById('status');
+        let stream = null;
+
+        // 显示状态信息
+        function showStatus(message, type = 'success') {
+            status.textContent = message;
+            status.style.display = 'block';
+            status.className = `status ${type}`;
+        }
+
+        // 开启摄像头
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'user'
+                    }
+                });
+                video.srcObject = stream;
+                startButton.disabled = true;
+                stopButton.disabled = false;
+                showStatus('摄像头已成功开启');
+            } catch (err) {
+                console.error('摄像头访问错误:', err);
+                showStatus(getErrorMessage(err), 'error');
+            }
+        }
+
+        // 关闭摄像头
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+                startButton.disabled = false;
+                stopButton.disabled = true;
+                showStatus('摄像头已关闭');
+            }
+        }
+
+        // 获取错误信息
+        function getErrorMessage(error) {
+            switch(error.name) {
+                case 'NotFoundError':
+                    return '未找到摄像头设备';
+                case 'NotAllowedError':
+                    return '用户拒绝了摄像头访问权限';
+                case 'NotReadableError':
+                    return '摄像头设备正被其他应用程序使用';
+                default:
+                    return `摄像头访问失败: ${error.message}`;
+            }
+        }
+
+        // 事件监听
+        startButton.addEventListener('click', startCamera);
+        stopButton.addEventListener('click', stopCamera);
+
+        // 页面关闭时确保释放摄像头
+        window.addEventListener('beforeunload', stopCamera);
+    </script>
+</div>
+</body>
+</html>
