@@ -152,7 +152,9 @@
                     canvas.width = 1280;
                     canvas.height = 720;
                     context = canvas.getContext('2d');
-
+                    console.log(canvas,'canvas');
+                    console.log(context,'context');
+                    
                     // 开始视频流传输
                     isStreaming = true;
                     streamVideo();
