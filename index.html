@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,30 +15,35 @@
             font-family: Arial, sans-serif;
             background-color: #f0f2f5;
         }
+
         .container {
             max-width: 800px;
             width: 100%;
             background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
         .video-container {
             position: relative;
             width: 100%;
             margin: 20px 0;
         }
+
         #video {
             width: 100%;
             border-radius: 8px;
             background-color: #000;
         }
+
         .controls {
             margin-top: 20px;
             display: flex;
             gap: 10px;
             justify-content: center;
         }
+
         button {
             padding: 10px 20px;
             border: none;
@@ -47,24 +53,29 @@
             cursor: pointer;
             transition: background-color 0.3s;
         }
+
         button:hover {
             background-color: #4096ff;
         }
+
         button:disabled {
             background-color: #d9d9d9;
             cursor: not-allowed;
         }
+
         .status {
             margin-top: 10px;
             padding: 10px;
             border-radius: 4px;
             text-align: center;
         }
+
         .error {
             background-color: #fff2f0;
             border: 1px solid #ffccc7;
             color: #cf1322;
         }
+
         .success {
             background-color: #f6ffed;
             border: 1px solid #b7eb8f;
@@ -72,6 +83,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>摄像头访问</h1>
@@ -101,21 +113,43 @@
 
         // 开启摄像头
         async function startCamera() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
-                        facingMode: 'user'
-                    }
-                });
-                video.srcObject = stream;
-                startButton.disabled = true;
-                stopButton.disabled = false;
-                showStatus('摄像头已成功开启');
-            } catch (err) {
-                console.error('摄像头访问错误:', err);
-                showStatus(getErrorMessage(err), 'error');
+            if (navigator.mediaDevices) {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 },
+                            facingMode: 'user',
+                            frameRate: { ideal: 15 }, // 帧率
+                        }
+                    });
+                    video.srcObject = stream;
+                    startButton.disabled = true;
+                    stopButton.disabled = false;
+                    showStatus('摄像头已成功开启');
+                } catch (err) {
+                    console.error('摄像头访问错误:', err);
+                    showStatus(getErrorMessage(err), 'error');
+                }
+            }else{
+                showStatus('您的浏览器不支持摄像头访问', 'error');
+                try {
+                    stream = await navigator.webkitGetUserMedia({
+                        video: {
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 },
+                            facingMode: 'user',
+                            frameRate: { ideal: 15 }, // 帧率
+                        }
+                    });
+                    video.srcObject = stream;
+                    startButton.disabled = true;
+                    stopButton.disabled = false;
+                    showStatus('摄像头已成功开启');
+                } catch (err) {
+                    console.error('摄像头访问错误:', err);
+                    showStatus(getErrorMessage(err), 'error');
+                }
             }
         }
 
@@ -132,7 +166,7 @@
 
         // 获取错误信息
         function getErrorMessage(error) {
-            switch(error.name) {
+            switch (error.name) {
                 case 'NotFoundError':
                     return '未找到摄像头设备';
                 case 'NotAllowedError':
@@ -151,6 +185,7 @@
         // 页面关闭时确保释放摄像头
         window.addEventListener('beforeunload', stopCamera);
     </script>
-</div>
+    </div>
 </body>
+
 </html>
