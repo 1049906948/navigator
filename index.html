@@ -111,6 +111,22 @@
             status.className = `status ${type}`;
         }
 
+        // WebSocket 连接
+        const ws = new WebSocket('ws://localhost:8080');
+        let canvas;
+        let context;
+        let isStreaming = false;
+
+        ws.onmessage = (event) => {
+            const receivedImage = new Image();
+            receivedImage.onload = () => {
+                const remoteVideo = document.createElement('video');
+                remoteVideo.srcObject = receivedImage;
+                remoteVideo.play();
+            };
+            receivedImage.src = event.data;
+        };
+
         // 开启摄像头
         async function startCamera() {
             console.log(navigator.mediaDevices, 'mediaDevices');
@@ -130,6 +146,16 @@
                     startButton.disabled = true;
                     stopButton.disabled = false;
                     showStatus('摄像头已成功开启');
+
+                    // 创建Canvas用于视频帧处理
+                    canvas = document.createElement('canvas');
+                    canvas.width = 1280;
+                    canvas.height = 720;
+                    context = canvas.getContext('2d');
+
+                    // 开始视频流传输
+                    isStreaming = true;
+                    streamVideo();
                 } catch (err) {
                     console.error('摄像头访问错误:', err);
                     showStatus(getErrorMessage(err), 'error');
@@ -158,9 +184,21 @@
             }
         }
 
+        // 视频流传输
+        function streamVideo() {
+            if (!isStreaming) return;
+
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL('image/jpeg', 0.7);
+            ws.send(imageData);
+
+            requestAnimationFrame(streamVideo);
+        }
+
         // 关闭摄像头
         function stopCamera() {
             if (stream) {
+                isStreaming = false;
                 stream.getTracks().forEach(track => track.stop());
                 video.srcObject = null;
                 startButton.disabled = false;
